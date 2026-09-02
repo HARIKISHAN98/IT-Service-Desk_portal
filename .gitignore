@@ -1,0 +1,44 @@
+# 1. Root and OS
+.DS_STORE
+Thumn.db
+*.log
+.vscode/
+.idea/
+
+# 2. BACKEND (FASTAPI / Python) 
+# python virtual enviroment
+backend/venv/
+backend/.venv/
+**/venv/
+**/.venv/
+
+# Python Bytecode & cache
+backend/**/__pycache__/
+backend/**/*.py[cod]
+backend/**/*.pytest_cache/
+**/__pycache__/
+*.pyc
+
+# Local SQLite Databases & Sensitive Enviroment Files
+backend/*.db
+backend/*.sqlite3
+backend/database.db
+database.db
+backend/.env
+backend/.env.*
+!backend/.env.example
+.env
+
+# Stored Attachment (keeps folder structure via .gitkeep)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# 3. FRONTEND (Ready for when you initialize it)
+frontend/node_modules/
+**/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.env
+frontend/.env.local
+!frontend/.env.example
+

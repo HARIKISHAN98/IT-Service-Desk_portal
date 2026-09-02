@@ -5,7 +5,7 @@ from passlib.context import CryptContext
 from jose import jwt ,JWTError
 
 from app.config import settings
-
+ 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def hash_password(password: str) -> str:

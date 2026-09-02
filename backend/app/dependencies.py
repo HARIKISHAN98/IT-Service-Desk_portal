@@ -8,7 +8,7 @@ from app.models import User, UserStatus, UserRole
 from app.utils import decode_access_token
 
 # OAuth2 scheme for swagger UI and Header Extration
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 # Database session Dependency
 def get_db() -> Generator[Session, None, None]:

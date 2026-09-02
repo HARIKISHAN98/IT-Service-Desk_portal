@@ -2,7 +2,7 @@ from typing import Optional, List
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models import User, Department, SupportAgentProfile, Ticket, Comment, Attachment ,TicketCategory, TicketPriority, TicketStatus, TicketHistory
+from app.models import User,UserRole, UserStatus ,Department ,SupportAgentProfile, Ticket, Comment, Attachment ,TicketCategory, TicketPriority, TicketStatus, TicketHistory
 from app.schemas import UserCreate, UserUpdate, DepartmentCreate, DepartmentUpdate, SupportAgentProfileUpdate, TicketCreate, TicketUpdate, CommentCreate, AttachmentResponse
 
 from app.utils import hash_password
@@ -14,10 +14,27 @@ def get_user_by_id(db: Session, user_id: int) -> Optional[User]:
 def get_user_by_email(db: Session, user_email: str) -> Optional[User]:
     return db.query(User).filter(User.email == user_email).first()
 
-def get_users(db: Session,skip: int = 0,limit: int = 100) -> List[User]:
-    return db.query(User).offset(skip).limit(limit).all()
+def get_users(
+        db: Session,
+        skip: int = 0,
+        limit: int = 100,
+        role: Optional[UserRole] = None,
+    ) -> List[User]:
+    """
+    Fetch non-admin users with optional role filtering and pagination
+    """
 
-def create_user(db: Session, user_in: UserCreate) -> User:
+    """Exclude all admin on db-level"""
+    query = db.query(User).filter(User.role != UserRole.ADMIN)
+
+    """If dropdown filter selected (SUPPORT_AGENT or Only END_USER)"""
+    if role:
+        query = query.filter(User.role == role)
+
+    """Apply Pagination"""    
+    return query.offset(skip).limit(limit).all()
+
+def create_user(db: Session, user_in: UserCreate,role: UserRole) -> User:
     hashed_pwd = hash_password(user_in.password)
     db_user = User(
         first_name = user_in.first_name,
@@ -25,26 +42,26 @@ def create_user(db: Session, user_in: UserCreate) -> User:
         email = user_in.email,
         password_hash = hashed_pwd,
         phone = user_in.phone,
-        role = user_in.role,
-        status = user_in.status
+        role = role,
+        status = UserStatus.ACTIVE
     )
+    
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
     return db_user
-
+ 
 def update_user(db: Session, db_user: User, user_in: UserUpdate) -> User:
     #   only keep those fields whose value is changed  
     update_data = user_in.model_dump(exclude_unset=True)
 
-    # if we want to change password then we need to set the hash password
-    if "password" in update_data and update_data["password"]:
-        hashed_pwd = hash_password(update_data.pop("password"))
-        db_user.password_hash = hashed_pwd
-
     # update the rest fields dynamically
     for field, value in update_data.items():
-        setattr(db_user, field, value)
+       if value is not None:
+            if field == "password":
+                db_user.password_hash = hash_password(value)
+            else:      
+                setattr(db_user, field, value)
 
     db.commit()
     db.refresh(db_user)
@@ -59,12 +76,12 @@ def get_department_by_name(db: Session, name: str) -> Optional[Department]:
 
 def get_departments(db: Session,skip: int = 0,limit: int= 100) -> List[Department]:
     return db.query(Department).offset(skip).limit(limit).all()
-
+  
 def create_department(db: Session, department_in: DepartmentCreate) -> Department:
     db_department = Department(
         name = department_in.name,
         description = department_in.description,
-        status = department_in.status
+        status = DepartmentStatus.ACTIVE
     )
     db.add(db_department)
     db.commit()
@@ -155,6 +172,7 @@ def log_ticket_history(
         old_value: Optional[str],
         new_value: Optional[str]
         ) -> TicketHistory:
+    
     db_ticket_history = TicketHistory(
         ticket_id = ticket_id,
         changed_by_id = changed_by_id,
@@ -162,6 +180,7 @@ def log_ticket_history(
         old_value = old_value,
         new_value = new_value
     )
+
     db.add(db_ticket_history)
     db.commit()
     db.refresh(db_ticket_history)
@@ -175,8 +194,9 @@ def create_ticket(db: Session, ticket_in: TicketCreate, user_id: int) -> Ticket:
         description = ticket_in.description,
         category = ticket_in.category,
         priority = ticket_in.priority,
-        ticket_type = ticket_in.ticket_type,
-        department_id = ticket_in.department_id,
+        ticket_type = None, # Initial state: unassigned
+        department_id = None, # Initial state: unassigned
+        assigned_agent_id = None, # Initial state: unassigned
         created_by_id = user_id,
         status = TicketStatus.OPEN
     )
@@ -196,14 +216,12 @@ def create_ticket(db: Session, ticket_in: TicketCreate, user_id: int) -> Ticket:
 def update_ticket(
         db: Session, 
         db_ticket: Ticket, 
-        ticket_in : TicketUpdate,
+        ticket_in : dict,
         change_by_id : int
         ) -> Ticket:
-    # unset field filter kro
-    update_data = ticket_in.model_dump(exclude_unset=True)
 
     #har field ko check kro
-    for field, new_val in update_data.items():
+    for field, new_val in ticket_in.items():
         old_val = getattr(db_ticket, field)
 
         # Enum/values ko string me convert kro 
@@ -233,7 +251,7 @@ def create_comment(db: Session,ticket_id: int, author_id: int, comment_in: Comme
     db_comment = Comment(
         ticket_id = ticket_id,
         author_id = author_id,
-        body = comment_in.body
+        body = comment_in.body.strip()
     )
     db.add(db_comment)
     db.commit()

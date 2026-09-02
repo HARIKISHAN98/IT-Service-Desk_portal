@@ -127,7 +127,7 @@ class Comment(Base):
 
     # Relationship
     ticket = relationship("Ticket", back_populates="comments")
-    author = relationship("User",back_populates="comments")
+    author = relationship("User",foreign_keys=[author_id],back_populates="comments")
 
 class Attachment(Base):
     __tablename__ = "attachments"
@@ -155,5 +155,5 @@ class TicketHistory(Base):
     
     # Relationship
     ticket = relationship("Ticket", back_populates="ticket_history")
-    changed_by = relationship("User", back_populates="history_entries")
+    changed_by = relationship("User",foreign_keys=[changed_by_id] ,back_populates="history_entries")
 

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, field_validator
 from datetime import datetime
 from typing import Optional, List
 from app.models import (
@@ -10,6 +10,25 @@ from app.models import (
     TicketPriority,
     TicketStatus
 )
+
+# Reusable summary schemas
+
+class UserSummary(BaseModel):
+    id:int
+    first_name:str
+    last_name:str
+    email:str
+    role: UserRole
+
+    class Config:
+        from_attributes: True
+
+class DepartmentSummry(BaseModel):
+    id: int
+    name: str
+
+    class Config:
+        from_attribute:True
 
 # Auth & Token Schemas
 class Token(BaseModel):
@@ -32,17 +51,16 @@ class UserBase(BaseModel):
     last_name: str = Field(..., min_length=1, max_length=50)
     email : EmailStr
     phone : Optional[str] = Field(None,max_length=20)
-    role : UserRole = UserRole.END_USER
-    status : UserStatus = UserStatus.ACTIVE
 
 class UserCreate(UserBase):
     password : str = Field(..., min_length=8, max_length=128)
 
 class UserUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid") # Rejects unexpected/extra fields
+
     first_name : Optional[str] = Field(None, min_length=1, max_length=50)
     last_name : Optional[str] = Field(None, min_length=1, max_length=50)
     phone : Optional[str] = Field(None, max_length=20)
-    role : Optional[UserRole] = None
     status : Optional[UserStatus] = None
     password : Optional[str] = Field(None, min_length=8, max_length=128)
 
@@ -50,6 +68,8 @@ class UserResponse(UserBase):
     id : int
     created_at : datetime
     updated_at : datetime
+    role : UserRole 
+    status : UserStatus 
 
     class Config:
         from_attributes = True     
@@ -59,18 +79,19 @@ class UserResponse(UserBase):
 class DepartmentBase(BaseModel):
     name : str = Field(..., min_length=2, max_length=100)
     description : Optional[str] = None
-    status : DepartmentStatus = DepartmentStatus.ACTIVE
 
 class DepartmentCreate(DepartmentBase):
-      pass
+    model_config= ConfigDict(extra="forbid")
 
 class DepartmentUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
     name : Optional[str] = Field(None, min_length=2, max_length=100)
     description : Optional[str] = None
     status : Optional[DepartmentStatus] = None
 
 class DepartmentResponse(DepartmentBase):
     id : int
+    status : DepartmentStatus
     created_at : datetime
     updated_at : datetime
 
@@ -106,15 +127,21 @@ class TicketBase(BaseModel):
     description : str = Field(..., min_length=10)
     category : TicketCategory
     priority : TicketPriority
-    ticket_type : Optional[TicketType] = None
-    department_id : Optional[int] = None
 
 class TicketCreate(TicketBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
+
+    @field_validator("title","description")
+    @classmethod
+    def strip_and_validate_text(cls,v: str) -> str:
+        trimmed = v.strip()
+        if not trimmed:
+            raise ValueError("Field can not be empty and contain only whitespace.")
+        return trimmed
 
 class TicketUpdate(BaseModel):
-    title : Optional[str] = Field(None, min_length=5, max_length=255)
-    description : Optional[str] = Field(None, min_length=10)
+    model_config = ConfigDict(extra="forbid")
+
     category : Optional[TicketCategory] = None
     priority : Optional[TicketPriority] = None
     status : Optional[TicketStatus] = None
@@ -126,10 +153,19 @@ class TicketResponse(TicketBase):
      id : int
      ticket_key : str
      status : TicketStatus
-     created_by_id : int
-     assigned_agent_id : Optional[int] = None
+     ticket_type : Optional[TicketType] = None
      created_at : datetime
      updated_at : datetime
+
+    # IDs are preserved for (Frontend conditionals & Routing ke liye)
+     department_id: Optional[int] = None
+     created_by_id : int
+     assigned_agent_id : Optional[int] = None
+
+    # Nested Objects (Screen display labels ke liye)
+     department: Optional[DepartmentSummry] = None
+     created_by: UserSummary
+     assigned_agent: Optional[UserSummary] = None
 
      class Config:
        from_attributes = True
@@ -137,16 +173,24 @@ class TicketResponse(TicketBase):
 # Comment Schemas
 
 class CommentBase(BaseModel):
-    body : str = Field(..., min_length=1)
+    body : str = Field(..., min_length=1, max_length=2000)
 
 class CommentCreate(CommentBase):
-    pass
+    model_config = ConfigDict(extra="forbid")
+    @field_validator("body")
+    @classmethod
+    def validate_non_empty_body(cls, v: str) -> str:
+        trimmed = v.strip()
+        if not trimmed:
+            raise ValueError("Comment body cannot be empty or just whitespace.")
+        return trimmed
 
 class CommentResponse(CommentBase):
     id : int
     ticket_id : int
     author_id : int
     created_at : datetime
+    author: UserSummary  #Nested user details
 
     class Config:
         from_attributes = True
@@ -175,7 +219,9 @@ class TicketHistoryResponse(BaseModel):
     old_value: Optional[str] = None
     new_value : Optional[str] = None
     created_at : datetime
+    changed_by: UserSummary  # Nester user who made the changes
 
     class Config :
         from_attributes = True
 
+ 
