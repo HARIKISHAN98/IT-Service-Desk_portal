@@ -200,12 +200,12 @@ class CommentResponse(CommentBase):
 class AttachmentResponse(BaseModel):
     id : int
     ticket_id : int
-    uploader_id : int
     file_name : str
-    file_path : str
+    content_type: str
     file_size : int
     created_at : datetime
-
+    uploader : UserSummary
+    
     class Config:
         from_attributes = True    
 

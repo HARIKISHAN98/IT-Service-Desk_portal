@@ -1,3 +1,4 @@
+
 import enum
 from datetime import datetime, timezone
 from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Enum as SQLEnum, JSON
@@ -133,9 +134,11 @@ class Attachment(Base):
     __tablename__ = "attachments"
     id = Column(Integer,primary_key=True,index=True,autoincrement=True)
     ticket_id = Column(Integer,ForeignKey("tickets.id"),nullable=False)
-    uploader_id = Column(Integer,ForeignKey("users.id"),nullable=False)
+    uploaded_by_id = Column(Integer,ForeignKey("users.id"),nullable=False)
     file_name = Column(String(255), nullable=False)
+    stored_file_name = Column(String(255), nullable=False, unique=True)
     file_path = Column(String(500),nullable=False)
+    content_type = Column(String(100), nullable=False)
     file_size = Column(Integer,nullable=False)
     created_at = Column(DateTime,default=get_current_utc_time, nullable=False) 
 
@@ -156,4 +159,5 @@ class TicketHistory(Base):
     # Relationship
     ticket = relationship("Ticket", back_populates="ticket_history")
     changed_by = relationship("User",foreign_keys=[changed_by_id] ,back_populates="history_entries")
+
 

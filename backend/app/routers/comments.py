@@ -2,7 +2,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from app.dependencies import get_db, get_current_user
-from app.models import User, UserRole
+from app.models import TicketStatus, User, UserRole
 import app.crud as crud
 from app.schemas import CommentCreate, CommentResponse
 
@@ -54,6 +54,13 @@ def add_comment(
 
     #2 check access the permission
     check_comment_access(ticket,current_user=current_user)
+
+    # 1. Block comment additions if ticket is CLOSED
+    if ticket.status == TicketStatus.CLOSED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ticket is Closed. Comments cannot be added."
+        )
 
     #3 Create the new comment
     return crud.create_comment(

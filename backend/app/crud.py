@@ -264,12 +264,31 @@ def get_ticket_comments(db: Session, ticket_id: int) -> List[Comment]:
 
 # Attachement CRUD 
 
-def create_attachment(db: Session, ticket_id: int, uploader_id: int, file_name: str, file_path: str, file_size: int) -> Attachment:
+# check ticket attachment count
+def get_ticket_attachment_count(db: Session, ticket_id: int) -> int:
+    return db.query(Attachment).filter(Attachment.ticket_id == ticket_id).count()
+
+# Fetch single attachment
+def get_attachment_by_id(db: Session, attachment_id: int):
+    return db.query(Attachment).filter(Attachment.id == attachment_id).first()
+
+def create_attachment(
+        db: Session, 
+        ticket_id: int, 
+        uploaded_by_id: int, 
+        file_name: str, 
+        stored_file_name: str,
+        file_path: str, 
+        content_type: str,
+        file_size: int
+        ) -> Attachment:
     db_attachment = Attachment(
         ticket_id = ticket_id,
-        uploader_id = uploader_id,
+        uploaded_by_id = uploaded_by_id,
         file_name = file_name,
+        stored_file_name = stored_file_name,
         file_path = file_path,
+        content_type = content_type,
         file_size = file_size
     )
     db.add(db_attachment)
