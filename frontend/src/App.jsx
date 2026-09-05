@@ -6,10 +6,11 @@ import ProtectedRoute from "./components/guards/ProtectedRoute"
 import PublicRoutes from "./components/guards/PublicRoutes"
 
 // Layout & pages
-import MainLayout from "./components/layout/MainLayout"
+import MainLayout from "./components/layouts/MainLayout"
 import Login from "./pages/Login"
 import Dashboard from "./pages/Dashboard"
-
+import Register from "./pages/Register"
+import Users from "./pages/Users"
 
 function App() {
   return (
@@ -27,12 +28,17 @@ function App() {
               </PublicRoutes>
             } />
 
-            {/* Protected Routes wrapped inside MainLayout */}
-            <Route element={ <ProtectedRoute><MainLayout/></ProtectedRoute>}>
-              <Route path="/dashboard" element={<Dashboard/>} />
-              {/* Future nested Pages like /tickets, /users comes hers */}
-            </Route>
+            <Route path="/register" element={<PublicRoutes> <Register /> </PublicRoutes>} />
 
+            {/* Protected Routes wrapped inside MainLayout */}
+            <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              {/* Future nested Pages like /tickets, /users comes hers */}
+              {/* Inside the MainLayout route block in App.jsx */}
+              <Route path="/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><Users /> </ProtectedRoute>
+              }
+              />
+            </Route>
           </Routes>
         </AuthProvider>
       </BrowserRouter>

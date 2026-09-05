@@ -2,7 +2,7 @@ from typing import Optional, List
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models import User,UserRole, UserStatus ,Department ,SupportAgentProfile, Ticket, Comment, Attachment ,TicketCategory, TicketPriority, TicketStatus, TicketHistory
+from app.models import User,UserRole, UserStatus ,Department ,SupportAgentProfile, Ticket, Comment, Attachment ,TicketCategory, TicketPriority, TicketStatus, TicketHistory, DepartmentStatus
 from app.schemas import UserCreate, UserUpdate, DepartmentCreate, DepartmentUpdate, SupportAgentProfileUpdate, TicketCreate, TicketUpdate, CommentCreate, AttachmentResponse
 
 from app.utils import hash_password
