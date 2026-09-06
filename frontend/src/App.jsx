@@ -13,6 +13,7 @@ import Register from "./pages/Register"
 import Users from "./pages/Users"
 import Tickets from "./pages/Tickets"
 import CreateTicketPage from "./pages/CreateTicketPage"
+import TicketDetailsPage from "./pages/TicketDetailsPage"
 
 function App() {
   return (
@@ -39,6 +40,7 @@ function App() {
               <Route path="/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><Users /> </ProtectedRoute>} />
               <Route path="/tickets/new" element={<ProtectedRoute allowedRoles={['END_USER']}><CreateTicketPage /></ProtectedRoute>}/>
               <Route path="/tickets" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPORT_AGENT', 'END_USER']}> <Tickets /> </ProtectedRoute>} />
+              <Route path="/tickets/:id" element={<TicketDetailsPage />} />
             </Route>
           </Routes>
         </AuthProvider>

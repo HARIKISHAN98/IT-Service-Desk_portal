@@ -1,10 +1,12 @@
 import { useEffect, useState, useMemo } from 'react';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Tickets = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+
   const isEndUser = user?.role === 'END_USER';
 
   const [tickets, setTickets] = useState([]);
@@ -352,7 +354,8 @@ const Tickets = () => {
                   return (
                     <div
                       key={item.id}
-                      className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-sm hover:border-slate-700 transition"
+                      onClick={() => navigate(`/tickets/${item.id}`)}
+                      className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-sm hover:border-slate-700 transition cursor-pointer"
                     >
                       {/* Top Row: Key + Priority + Status Badges */}
                       <div className="flex items-center justify-between gap-2">
@@ -445,7 +448,7 @@ const Tickets = () => {
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 text-slate-200">
                       {filteredTickets.map((item) => (
-                        <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
+                        <tr key={item.id} onClick={() => navigate(`/tickets/${item.id}`)} className="hover:bg-slate-800/30 transition-colors cursor-pointer">
                           {/* Ticket Key */}
                           <td className="px-4 py-3.5 whitespace-nowrap align-top">
                             <span className="font-mono text-xs font-bold text-sky-400 bg-sky-500/10 border border-sky-500/20 px-2 py-1 rounded">
