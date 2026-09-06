@@ -11,6 +11,8 @@ import Login from "./pages/Login"
 import Dashboard from "./pages/Dashboard"
 import Register from "./pages/Register"
 import Users from "./pages/Users"
+import Tickets from "./pages/Tickets"
+import CreateTicketPage from "./pages/CreateTicketPage"
 
 function App() {
   return (
@@ -33,11 +35,10 @@ function App() {
             {/* Protected Routes wrapped inside MainLayout */}
             <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
               <Route path="/dashboard" element={<Dashboard />} />
-              {/* Future nested Pages like /tickets, /users comes hers */}
               {/* Inside the MainLayout route block in App.jsx */}
-              <Route path="/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><Users /> </ProtectedRoute>
-              }
-              />
+              <Route path="/users" element={<ProtectedRoute allowedRoles={['ADMIN']}><Users /> </ProtectedRoute>} />
+              <Route path="/tickets/new" element={<ProtectedRoute allowedRoles={['END_USER']}><CreateTicketPage /></ProtectedRoute>}/>
+              <Route path="/tickets" element={<ProtectedRoute allowedRoles={['ADMIN', 'SUPPORT_AGENT', 'END_USER']}> <Tickets /> </ProtectedRoute>} />
             </Route>
           </Routes>
         </AuthProvider>

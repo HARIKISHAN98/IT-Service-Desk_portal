@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import API from '../services/api';
 import CreateAgentModal from '../components/users/CreateAgentModal';
 import EditUserModal from '../components/users/EditUserModal';
@@ -39,7 +39,7 @@ const Users = () => {
     useEffect(() => {
         fetchUsers();
     }, []);
-
+ 
     // Compute filtered list dynamically in memory
     const filteredUsers = useMemo(() => {
         return users.filter((u) => {
@@ -58,7 +58,7 @@ const Users = () => {
             return matchesSearch && matchesRole && matchesStatus;
         });
     }, [users, searchQuery, roleFilter, statusFilter]);
-
+ 
     const hasActiveFilters = searchQuery.trim() !== '' || roleFilter !== 'ALL' || statusFilter !== 'ALL';
 
     const resetFilters = () => {
@@ -76,23 +76,23 @@ const Users = () => {
         }
     };
 
-    const getStatusBadge = (status = 'ACTIVE') => {
-        const isActive = status?.toUpperCase() === 'ACTIVE';
-        return (
-            <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide border transition-colors ${isActive
-                        ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                        : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
-                    }`}
-            >
-                <span
-                    className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
-                        }`}
-                />
-                <span className="capitalize">{isActive ? 'Active' : 'Inactive'}</span>
-            </span>
-        );
-    };
+    // const getStatusBadge = (status = 'ACTIVE') => {
+    //     const isActive = status?.toUpperCase() === 'ACTIVE';
+    //     return (
+    //         <span
+    //             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-medium tracking-wide border transition-colors ${isActive
+    //                 ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+    //                 : 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+    //                 }`}
+    //         >
+    //             <span
+    //                 className={`w-1.5 h-1.5 rounded-full ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'
+    //                     }`}
+    //             />
+    //             <span className="capitalize">{isActive ? 'Active' : 'Inactive'}</span>
+    //         </span>
+    //     );
+    // };
 
     const formatDate = (dateString) => {
         if (!dateString) return '—';
@@ -182,8 +182,8 @@ const Users = () => {
                                 value={roleFilter}
                                 onChange={(e) => setRoleFilter(e.target.value)}
                                 className={`appearance-none pl-3 pr-9 py-2 bg-slate-950/60 border text-xs font-medium rounded-lg transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 ${roleFilter !== 'ALL'
-                                        ? 'border-sky-500/50 text-sky-400 bg-sky-500/5'
-                                        : 'border-slate-800 text-slate-300 hover:border-slate-700'
+                                    ? 'border-sky-500/50 text-sky-400 bg-sky-500/5'
+                                    : 'border-slate-800 text-slate-300 hover:border-slate-700'
                                     }`}
                             >
                                 <option value="ALL">All Roles</option>
@@ -214,8 +214,8 @@ const Users = () => {
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className={`appearance-none pl-3 pr-9 py-2 bg-slate-950/60 border text-xs font-medium rounded-lg transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 ${statusFilter !== 'ALL'
-                                        ? 'border-sky-500/50 text-sky-400 bg-sky-500/5'
-                                        : 'border-slate-800 text-slate-300 hover:border-slate-700'
+                                    ? 'border-sky-500/50 text-sky-400 bg-sky-500/5'
+                                    : 'border-slate-800 text-slate-300 hover:border-slate-700'
                                     }`}
                             >
                                 <option value="ALL">All Status</option>
@@ -278,73 +278,189 @@ const Users = () => {
                             Try adjusting your search query or reset the active filters.
                         </p>
                     </div>
-                ) : (
+                ) : <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left text-sm border-collapse">
-                            <thead className="bg-slate-800/90 text-slate-200 text-xs uppercase tracking-wider border-b border-slate-700">
-                                <tr>
-                                    <th className="px-4 py-3.5 font-bold">User Details</th>
-                                    <th className="px-4 py-3.5 font-bold">Role</th>
-                                    <th className="hidden md:table-cell px-4 py-3.5 font-bold">Phone</th>
-                                    <th className="px-4 py-3.5 font-bold">Status</th>
-                                    <th className="hidden sm:table-cell px-4 py-3.5 font-bold">Joined</th>
-                                    <th className="px-4 py-3.5 font-bold text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/60 text-slate-200">
-                                {filteredUsers.map((item) => (
-                                    <tr key={item.id} className="hover:bg-slate-800/30 transition-colors">
-                                        <td className="px-4 py-3.5">
-                                            <p className="font-semibold text-white text-xs sm:text-sm">
-                                                {item.first_name} {item.last_name}
-                                            </p>
-                                            <p className="text-[11px] text-slate-400">{item.email}</p>
-                                            {item.phone && (
-                                                <p className="text-[10px] text-slate-400 md:hidden mt-0.5">
-                                                    📞 {item.phone}
-                                                </p>
-                                            )}
-                                        </td>
+                        <>
+                            {/* 1. MOBILE CARD VIEW (Only on screens < 768px) */}
+                            <div className="grid grid-cols-1 gap-3 md:hidden">
+                                {filteredUsers.map((u) => {
+                                    const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unnamed User';
+                                    const initial = (fullName || u.email || 'U')[0].toUpperCase();
+                                    const displayPhone = u.phone?.trim() || null;
 
-                                        <td className="px-4 py-3.5 whitespace-nowrap">
-                                            <span
-                                                className={`inline-block px-2.5 py-0.5 text-[9px] sm:text-[10px] font-bold tracking-wider uppercase rounded border ${getRoleBadge(
-                                                    item.role
-                                                )}`}
-                                            >
-                                                {item.role?.replace('_', ' ')}
-                                            </span>
-                                        </td>
+                                    return (
+                                        <div
+                                            key={u.id}
+                                            className="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3 shadow-sm"
+                                        >
+                                            {/* Row 1: Avatar, Full Name, Email & Edit Button */}
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex items-center space-x-3 min-w-0">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sky-400 shrink-0 text-sm">
+                                                        {initial}
+                                                    </div>
+                                                    <div className="min-w-0">
+                                                        <h4 className="text-sm font-semibold text-white truncate">
+                                                            {fullName}
+                                                        </h4>
+                                                        <p className="text-xs text-slate-400 truncate">
+                                                            {u.email}
+                                                        </p>
+                                                    </div>
+                                                </div>
 
-                                        <td className="hidden md:table-cell px-4 py-3.5 text-xs text-slate-300 whitespace-nowrap">
-                                            {item.phone || '—'}
-                                        </td>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedUser(u);
+                                                        setIsEditModalOpen(true);
+                                                    }}
+                                                    className="px-2.5 py-1 text-xs font-medium text-sky-400 hover:text-white bg-sky-500/10 hover:bg-sky-600 rounded-lg border border-sky-500/20 transition cursor-pointer shrink-0"
+                                                >
+                                                    Edit
+                                                </button>
+                                            </div>
 
-                                        <td className="px-4 py-3.5 whitespace-nowrap align-middle">
-                                            {getStatusBadge(item.status)}
-                                        </td>
+                                            {/* Row 2: Role Badge & Active/Inactive Status */}
+                                            <div className="flex items-center justify-between pt-1">
+                                                <span
+                                                    className={`inline-block px-2.5 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded border ${getRoleBadge(
+                                                        u.role
+                                                    )}`}
+                                                >
+                                                    {u.role.replace('_', ' ')}
+                                                </span>
 
-                                        <td className="hidden sm:table-cell px-4 py-3.5 text-xs text-slate-400 whitespace-nowrap">
-                                            {formatDate(item.created_at)}
-                                        </td>
+                                                {u.status === 'ACTIVE' ? (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                        Active
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                                        Inactive
+                                                    </span>
+                                                )}
+                                            </div>
 
-                                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                                            <button
-                                                onClick={() => {
-                                                    setSelectedUser(item);
-                                                    setIsEditModalOpen(true);
-                                                }}
-                                                className="px-3 py-1 text-xs font-semibold text-sky-400 hover:text-white bg-sky-500/10 hover:bg-sky-600 border border-sky-500/20 hover:border-transparent rounded-md transition duration-150 cursor-pointer"
-                                            >
-                                                Edit
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                            {/* Row 3: Verified Phone & Joined Date */}
+                                            <div className="pt-2.5 border-t border-slate-800/80 grid grid-cols-2 gap-2 text-xs text-slate-400">
+                                                <div className="flex items-center space-x-1.5 truncate">
+                                                    <span className="text-slate-500 text-[11px]">📞</span>
+                                                    <span className="truncate">
+                                                        {displayPhone ? (
+                                                            <span className="text-slate-300 font-mono text-[11px]">{displayPhone}</span>
+                                                        ) : (
+                                                            <span className="text-slate-600 italic">Not provided</span>
+                                                        )}
+                                                    </span>
+                                                </div>
+                                                <div className="flex items-center space-x-1.5 justify-end truncate">
+                                                    <span className="text-slate-500 text-[11px]">📅</span>
+                                                    <span className="truncate">{formatDate(u.created_at)}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            {/* 2. DESKTOP TABLE VIEW (Only on screens >= 768px) */}
+                            <div className="hidden md:block bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+                                <div className="overflow-x-auto scrollbar:none [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"> 
+                                    <table className="w-full text-left text-sm border-collapse">
+                                        <thead className="bg-slate-800/90 text-slate-200 text-xs uppercase tracking-wider border-b border-slate-700">
+                                            <tr>
+                                                <th className="px-4 py-3.5 font-bold">User Details</th>
+                                                <th className="px-4 py-3.5 font-bold">Role</th>
+                                                <th className="px-4 py-3.5 font-bold">Phone</th>
+                                                <th className="px-4 py-3.5 font-bold">Status</th>
+                                                <th className="px-4 py-3.5 font-bold">Joined</th>
+                                                <th className="px-4 py-3.5 font-bold text-right">Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-slate-800/60 text-slate-200">
+                                            {filteredUsers.map((u) => {
+                                                const fullName = `${u.first_name || ''} ${u.last_name || ''}`.trim() || 'Unnamed User';
+                                                const initial = (fullName || u.email || 'U')[0].toUpperCase();
+
+                                                return (
+                                                    <tr key={u.id} className="hover:bg-slate-800/30 transition-colors">
+                                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                                            <div className="flex items-center space-x-3">
+                                                                <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-sky-400 text-xs shrink-0">
+                                                                    {initial}
+                                                                </div>
+                                                                <div className="min-w-0">
+                                                                    <p className="font-semibold text-white text-xs truncate">
+                                                                        {fullName}
+                                                                    </p>
+                                                                    <p className="text-[11px] text-slate-400 truncate">
+                                                                        {u.email}
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+
+                                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                                            <span
+                                                                className={`inline-block px-2 py-0.5 text-[10px] font-bold tracking-wider uppercase rounded border ${getRoleBadge(
+                                                                    u.role
+                                                                )}`}
+                                                            >
+                                                                {u.role.replace('_', ' ')}
+                                                            </span>
+                                                        </td>
+
+                                                        <td className="px-4 py-3.5 whitespace-nowrap text-xs text-slate-400">
+                                                            {u.phone ? (
+                                                                <span className="font-mono text-slate-300">{u.phone}</span>
+                                                            ) : (
+                                                                <span className="text-slate-600">—</span>
+                                                            )}
+                                                        </td>
+
+                                                        <td className="px-4 py-3.5 whitespace-nowrap">
+                                                            {u.status === 'ACTIVE' ? (
+                                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                                                    Active
+                                                                </span>
+                                                            ) : (
+                                                                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-500/10 text-slate-400 border border-slate-500/20">
+                                                                    <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />
+                                                                    Inactive
+                                                                </span>
+                                                            )}
+                                                        </td>
+
+                                                        <td className="px-4 py-3.5 whitespace-nowrap text-xs text-slate-400">
+                                                            {formatDate(u.created_at)}
+                                                        </td>
+
+                                                        <td className="px-4 py-3.5 whitespace-nowrap text-right text-xs">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => {
+                                                                    setSelectedUser(u);
+                                                                    setIsEditModalOpen(true);
+                                                                }}
+                                                                className="text-sky-400 hover:text-sky-300 font-medium px-2 py-1 rounded hover:bg-slate-800 transition cursor-pointer"
+                                                            >
+                                                                Edit
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </>
                     </div>
-                )}
+                </div>}
             </div>
 
             {/* Modals */}
