@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
@@ -26,6 +26,23 @@ const TicketDetailsPage = () => {
   const [pageError, setPageError] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
+  const [agents, setAgents] = useState([]);
+
+  // useEffect ya data fetching function ke andar:
+  useEffect(() => {
+    const loadAgents = async () => {
+      if (currentUser?.role === 'ADMIN') {
+        try {
+          const res = await API.get('/users/?role=SUPPORT_AGENT');
+          setAgents(Array.isArray(res.data) ? res.data : res.data?.items || []);
+        } catch (err) {
+          console.error('Failed to load agents', err);
+        }
+      }
+    };
+    loadAgents();
+  }, [currentUser]);
+
   const showToast = (message, type = 'success') => {
     setToastMessage({ message, type });
     setTimeout(() => setToastMessage(null), 4000);
@@ -37,15 +54,17 @@ const TicketDetailsPage = () => {
       setPageLoading(true);
       setPageError(null);
 
-      const [ticketRes, commentsRes, attachmentsRes] = await Promise.all([
+      const [ticketRes, commentsRes, attachmentsRes, historyRes] = await Promise.all([
         API.get(`/tickets/${ticketId}`),
         API.get(`/tickets/${ticketId}/comments/`),
         API.get(`/tickets/${ticketId}/attachments/`),
+        API.get(`/tickets/${ticketId}/history/`),
       ]);
 
       setTicket(ticketRes.data);
       setComments(commentsRes.data || []);
       setAttachments(attachmentsRes.data || []);
+      setHistoryLogs(historyRes.data || []);
     } catch (err) {
       const status = err.response?.status;
       if (status === 404) {
@@ -154,11 +173,10 @@ const TicketDetailsPage = () => {
       {/* Toast Banner */}
       {toastMessage && (
         <div
-          className={`fixed top-5 right-5 z-50 px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium transition-all ${
-            toastMessage.type === 'error'
-              ? 'bg-rose-950/90 text-rose-200 border-rose-800/80 shadow-rose-950/50'
-              : 'bg-emerald-950/90 text-emerald-200 border-emerald-800/80 shadow-emerald-950/50'
-          }`}
+          className={`fixed top-5 right-5 z-50 px-4 py-2.5 rounded-xl shadow-lg border text-xs font-medium transition-all ${toastMessage.type === 'error'
+            ? 'bg-rose-950/90 text-rose-200 border-rose-800/80 shadow-rose-950/50'
+            : 'bg-emerald-950/90 text-emerald-200 border-emerald-800/80 shadow-emerald-950/50'
+            }`}
         >
           {toastMessage.message}
         </div>
@@ -172,7 +190,7 @@ const TicketDetailsPage = () => {
 
       {/* Main Workspace Split Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
-        
+
         {/* Left Side (70% on desktop) */}
         <div className="lg:col-span-2 space-y-6">
           <TicketDescription ticket={ticket} />
@@ -187,6 +205,7 @@ const TicketDetailsPage = () => {
           />
 
           <TicketActivityTabs
+            ticket="{ticket}"
             comments={comments}
             isClosed={isClosed}
             currentUser={currentUser}
@@ -201,7 +220,9 @@ const TicketDetailsPage = () => {
             ticket={ticket}
             currentUser={currentUser}
             isClosed={isClosed}
+            agents={agents}
             onUpdateTicket={handleUpdateTicket}
+            onUpdateSuccess={fetchAllTicketData}
           />
         </div>
 

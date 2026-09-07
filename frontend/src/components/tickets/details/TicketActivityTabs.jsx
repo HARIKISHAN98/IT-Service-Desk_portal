@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 
 const TicketActivityTabs = ({
+  ticket,
   comments = [],
   isClosed,
   currentUser,
@@ -28,12 +29,27 @@ const TicketActivityTabs = ({
 
   const formatDate = (dateString) => {
     if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    const utcString = dateString.endsWith('Z') || dateString.includes('+') ? dateString : `${dateString}Z`;
+    return new Date(utcString).toLocaleDateString('en-IN', {
       month: 'short',
       day: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
     });
+  };
+
+  const getRoleLabel = (role) => {
+    switch (role) {
+      case 'END_USER':
+        return 'User';
+      case 'SUPPORT_AGENT':
+        return 'Agent';
+      case 'ADMIN':
+        return 'Admin';
+      default:
+        return 'User';
+    }
   };
 
   return (
@@ -68,7 +84,7 @@ const TicketActivityTabs = ({
       {/* Tab 1: Comments Thread */}
       {activeTab === 'comments' && (
         <div className="space-y-4">
-          <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+          <div className="space-y-3 max-h-[420px] overflow-y-auto no-scrollbar scrollbar-none pr-1">
             {comments.length === 0 ? (
               <p className="text-xs text-slate-500 italic py-4 text-center">
                 No comments posted yet. Start the conversation below.
@@ -95,9 +111,14 @@ const TicketActivityTabs = ({
                     </div>
                     <div className="flex-1 min-w-0 space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-white truncate">
-                          {authorName}
-                        </span>
+                        <div className="flex items-center space-x-1.5 truncate">
+                          <span className="text-xs font-semibold text-white truncate">
+                            {authorName}
+                          </span>
+                          <span className="text-[10px] font-medium text-slate-400">
+                            ({getRoleLabel(c.author?.role)})
+                          </span>
+                        </div>
                         <span className="text-[10px] text-slate-500 shrink-0">
                           {formatDate(c.created_at)}
                         </span>
@@ -146,31 +167,70 @@ const TicketActivityTabs = ({
 
       {/* Tab 2: Audit History Trail */}
       {activeTab === 'history' && (
-        <div className="space-y-3 max-h-[420px] overflow-y-auto pr-1">
+        <div className="space-y-3 max-h-[420px] overflow-y-auto no-scrollbar scrollbar-none pr-1">
           {historyLogs.length === 0 ? (
             <p className="text-xs text-slate-500 italic py-4 text-center">
               No audit logs recorded for this ticket yet.
             </p>
           ) : (
             historyLogs.map((log) => {
-              const modifier = log.changed_by
+              const modifierName = log.changed_by
                 ? `${log.changed_by.first_name || ''} ${log.changed_by.last_name || ''}`.trim() || log.changed_by.email
                 : 'System';
+              const modifierRole = log.changed_by?.role ? `(${getRoleLabel(log.changed_by.role)})` : '';
+
+              const displayFieldName =
+                log.field_name === 'assigned_agent_id'
+                  ? 'assigned agent'
+                  : log.field_name.replace(/_/g, ' ');
+
+              const resolveValue = (val) => {
+                if (!val) return 'Unassigned';
+
+                if (log.field_name === 'assigned_agent_id') {
+                  if (ticket?.assigned_agent && String(ticket.assigned_agent.id) === String(val)) {
+                    const fullName = `${ticket.assigned_agent.first_name || ''} ${ticket.assigned_agent.last_name || ''}`.trim();
+                    return fullName || 'Assigned Agent';
+                  }
+                  return `Agent #${val}`;
+                }
+
+                return val.replace(/_/g, ' ');
+              };
 
               return (
                 <div
                   key={log.id}
-                  className="p-3 bg-slate-950/40 border border-slate-800/70 rounded-xl text-xs space-y-1"
+                  className="p-3 bg-slate-950/40 border border-slate-800/70 rounded-xl text-xs space-y-1.5"
                 >
                   <div className="flex items-center justify-between text-slate-400 text-[11px]">
-                    <span className="font-medium text-slate-300">{modifier}</span>
-                    <span>{formatDate(log.created_at)}</span>
+                    <div className="flex items-center space-x-1">
+                      <span className="font-semibold text-slate-200">{modifierName}</span>
+                      <span className="text-slate-500 text-[10px]">{modifierRole}</span>
+                    </div>
+                    <span className="text-[10px] text-slate-500">{formatDate(log.created_at)}</span>
                   </div>
-                  <p className="text-slate-300">
-                    Changed <span className="font-mono text-sky-400">{log.field_name}</span> from{' '}
-                    <span className="text-rose-400 font-semibold">{log.old_value || 'None'}</span> to{' '}
-                    <span className="text-emerald-400 font-semibold">{log.new_value || 'None'}</span>
-                  </p>
+
+                  <div className="text-slate-300 flex items-center flex-wrap gap-1.5 pt-0.5">
+                    <span className="font-mono text-[11px] text-sky-400 bg-sky-500/10 px-1.5 py-0.5 rounded border border-sky-500/20 capitalize">
+                      {displayFieldName}
+                    </span>
+                    {log.old_value ? (
+                      <>
+                        <span className="text-rose-400 font-medium line-through decoration-rose-500/50">
+                          {resolveValue(log.old_value)}
+                        </span>
+                        <span className="text-slate-500 text-[10px]">→</span>
+                        <span className="text-emerald-400 font-semibold">
+                          {resolveValue(log.new_value)}
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-emerald-400 font-semibold">
+                        {resolveValue(log.new_value)}
+                      </span>
+                    )}
+                  </div>
                 </div>
               );
             })

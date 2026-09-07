@@ -4,6 +4,14 @@ import API from '../../../services/api';
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.pdf', '.txt', '.docx', '.csv', '.xlsx'];
 
+const MIME_MAP = {
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  txt: 'text/plain',
+};
+
 const TicketAttachments = ({
   ticketId,
   attachments = [],
@@ -15,6 +23,16 @@ const TicketAttachments = ({
   const fileInputRef = useRef(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(null);
+
+  const VIEWABLE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.pdf', '.txt'];
+
+  const isViewableFile = (fileName) => {
+    if (!fileName || typeof fileName !== 'string' || !fileName.includes('.')) {
+      return false;
+    }
+    const ext = `.${fileName.split('.').pop().toLowerCase()}`;
+    return VIEWABLE_EXTENSIONS.includes(ext);
+  };
 
   const formatFileSize = (bytes) => {
     if (!bytes) return '0 B';
@@ -75,6 +93,30 @@ const TicketAttachments = ({
     }
   };
 
+  const handleView = async (attachment) => {
+    try {
+      const ext = attachment.file_name.split('.').pop().toLowerCase();
+      const mimeType = MIME_MAP[ext] || attachment.content_type || 'application/octet-stream';
+
+      const response = await API.get(
+        `/tickets/${ticketId}/attachments/${attachment.id}/view`,
+        { responseType: 'blob' }
+      );
+
+      // Explicit type ke sath blob create karein taaki browser auto-download na kare
+      const fileBlob = new Blob([response.data], { type: mimeType });
+      const fileUrl = window.URL.createObjectURL(fileBlob);
+
+      // New tab me open karein
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+
+      // Memory cleanup after tab loads
+      setTimeout(() => window.URL.revokeObjectURL(fileUrl), 60000);
+    } catch {
+      setUploadError('Unable to preview file. Try downloading directly.');
+    }
+  };
+
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-sm space-y-4">
       <div className="flex items-center justify-between border-b border-slate-800/80 pb-3">
@@ -103,8 +145,15 @@ const TicketAttachments = ({
       </div>
 
       {uploadError && (
-        <div className="text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5">
-          {uploadError}
+        <div className="flex items-center justify-between text-xs text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-lg p-2.5">
+          <span>{uploadError}</span>
+          <button
+            type="button"
+            onClick={() => setUploadError(null)}
+            className="text-rose-400 hover:text-white font-bold ml-2 text-sm leading-none cursor-pointer"
+          >
+            ✕
+          </button>
         </div>
       )}
 
@@ -146,6 +195,18 @@ const TicketAttachments = ({
                 </div>
 
                 <div className="flex items-center space-x-1 shrink-0">
+                  {/* Safe View Check */}
+                  {isViewableFile(item?.file_name) && (
+                    <button
+                      type="button"
+                      onClick={() => handleView(item)}
+                      className="p-1 text-slate-400 hover:text-sky-400 transition cursor-pointer"
+                      title="Preview in new tab"
+                    >
+                      👁️
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     onClick={() => handleDownload(item)}

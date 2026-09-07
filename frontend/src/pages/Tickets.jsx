@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import API from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 const Tickets = () => {
   const { user } = useAuth();
@@ -18,6 +19,32 @@ const Tickets = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
   const [priorityFilter, setPriorityFilter] = useState('ALL');
+
+  const [searchParams] = useSearchParams();
+
+  // Status Filter State (Default 'ALL')
+  const [selectedStatus, setSelectedStatus] = useState('ALL');
+
+  // Assignment Filter State ('ALL' ya 'UNASSIGNED')
+  const [selectedAssignment, setSelectedAssignment] = useState('ALL');
+
+  // URL query params read karke dropdown filters ko set karein
+  useEffect(() => {
+    const statusParam = searchParams.get('status');
+    const assignedParam = searchParams.get('assigned');
+
+    if (statusParam) {
+      setStatusFilter(statusParam.toUpperCase());
+      setSelectedAssignment('ALL');
+    } else if (assignedParam === 'unassigned') {
+      setStatusFilter('ALL');
+      setSelectedAssignment('UNASSIGNED');
+    } else {
+      setStatusFilter('ALL');
+      setSelectedAssignment('ALL');
+    }
+  }, [searchParams]);
+
 
   const fetchTickets = async (isManualRefresh = false) => {
     if (isManualRefresh) setIsRefreshing(true);
@@ -43,6 +70,24 @@ const Tickets = () => {
   // In-memory instant search and multi-criteria filter
   const filteredTickets = useMemo(() => {
     return tickets.filter((t) => {
+      // 1. Status Filter (Supports dropdown + Dashboard cards)
+      if (statusFilter !== 'ALL' && t.status?.toUpperCase() !== statusFilter) {
+        return false;
+      }
+
+      // 2. Unassigned Filter (Admin Dashboard card)
+      if (selectedAssignment === 'UNASSIGNED') {
+        if (t.assigned_agent_id !== null || t.status === 'CLOSED') {
+          return false;
+        }
+      }
+
+      // 3. Priority Filter
+      if (priorityFilter !== 'ALL' && t.priority?.toUpperCase() !== priorityFilter) {
+        return false;
+      }
+
+      // 4. Search Query Filter
       const query = searchQuery.trim().toLowerCase();
       const matchesSearch =
         !query ||
@@ -50,15 +95,9 @@ const Tickets = () => {
         t.title?.toLowerCase().includes(query) ||
         t.description?.toLowerCase().includes(query);
 
-      const matchesStatus =
-        statusFilter === 'ALL' || t.status?.toUpperCase() === statusFilter;
-
-      const matchesPriority =
-        priorityFilter === 'ALL' || t.priority?.toUpperCase() === priorityFilter;
-
-      return matchesSearch && matchesStatus && matchesPriority;
+      return matchesSearch;
     });
-  }, [tickets, searchQuery, statusFilter, priorityFilter]);
+  }, [tickets, searchQuery, statusFilter, priorityFilter, selectedAssignment]);
 
   const hasActiveFilters =
     searchQuery.trim() !== '' || statusFilter !== 'ALL' || priorityFilter !== 'ALL';
@@ -215,22 +254,36 @@ const Tickets = () => {
 
           {/* Styled Dropdowns */}
           <div className="flex items-center gap-2">
-            {/* Status Dropdown */}
-            <div className="relative inline-block">
+            <div className="relative">
               <select
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className={`appearance-none pl-3 pr-9 py-2 bg-slate-950/60 border text-xs font-medium rounded-lg transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 ${statusFilter !== 'ALL'
-                  ? 'border-sky-500/50 text-sky-400 bg-sky-500/5'
-                  : 'border-slate-800 text-slate-300 hover:border-slate-700'
-                  }`}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setSelectedAssignment('ALL');
+                }}
+                className="appearance-none px-3.5 py-2.5 pr-9 bg-slate-900 border border-slate-800 rounded-xl text-xs font-medium text-slate-200 focus:outline-none focus:ring-1 focus:ring-sky-500 transition cursor-pointer"
               >
-                <option value="ALL">All Status</option>
-                <option value="OPEN">Open</option>
-                <option value="IN_PROGRESS">In Progress</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="CLOSED">Closed</option>
+                <option value="ALL" className="bg-slate-900 text-slate-200 py-1">
+                  All Statuses
+                </option>
+                <option value="OPEN" className="bg-slate-900 text-slate-200 py-1">
+                  Open
+                </option>
+                <option value="IN_PROGRESS" className="bg-slate-900 text-slate-200 py-1">
+                  In Progress
+                </option>
+                <option value="WAITING_FOR_USER" className="bg-slate-900 text-slate-200 py-1">
+                  Waiting for User
+                </option>
+                <option value="RESOLVED" className="bg-slate-900 text-slate-200 py-1">
+                  Resolved
+                </option>
+                <option value="CLOSED" className="bg-slate-900 text-slate-200 py-1">
+                  Closed
+                </option>
               </select>
+
+              {/* Single Clean Chevron Icon */}
               <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
@@ -243,7 +296,7 @@ const Tickets = () => {
               <select
                 value={priorityFilter}
                 onChange={(e) => setPriorityFilter(e.target.value)}
-                className={`appearance-none pl-3 pr-9 py-2 bg-slate-950/60 border text-xs font-medium rounded-lg transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 ${priorityFilter !== 'ALL'
+                className={`appearance-none pl-3 pr-9 py-2 bg-slate-900 border text-xs font-medium rounded-lg transition cursor-pointer focus:outline-none focus:ring-1 focus:ring-sky-500 ${priorityFilter !== 'ALL'
                   ? 'border-sky-500/50 text-sky-400 bg-sky-500/5'
                   : 'border-slate-800 text-slate-300 hover:border-slate-700'
                   }`}

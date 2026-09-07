@@ -3,12 +3,15 @@ import React from 'react';
 const TicketHeader = ({ ticket, onBack }) => {
   const formatDate = (dateString) => {
     if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('en-US', {
+    // Ensure UTC is parsed properly by appending 'Z' if timezone offset is missing
+    const utcString = dateString.endsWith('Z') || dateString.includes('+') ? dateString : `${dateString}Z`;
+    return new Date(utcString).toLocaleDateString('en-IN', {
       month: 'short',
       day: 'numeric',
       year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
+      hour12: true,
     });
   };
 
